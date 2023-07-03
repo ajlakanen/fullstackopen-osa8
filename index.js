@@ -1,5 +1,7 @@
 const { ApolloServer } = require("@apollo/server");
 const { startStandaloneServer } = require("@apollo/server/standalone");
+const { v1: uuid } = require("uuid");
+const { GraphQLError } = require("graphql");
 
 let persons = [
   {
@@ -25,33 +27,81 @@ let persons = [
 ];
 
 const typeDefs = `
+  enum YesNo {
+    YES
+    NO
+  }
+
+  type Address {
+    street: String!
+    city: String!
+  }
+
   type Person {
     name: String!
     phone: String
-    street: String!
-    city: String! 
+    address: Address!
     id: ID!
   }
 
   type Query {
     personCount: Int!
-    allPersons: [Person!]!
+    allPersons(phone: YesNo): [Person!]!
     findPerson(name: String!): Person
   }
+
+  type Mutation {
+    addPerson(
+      name: String!
+      phone: String
+      street: String!
+      city: String!
+    ): Person
+    
+    editNumber(
+      name: String!
+      phone: String!
+    ): Person
+  }
+
 `;
 
 const resolvers = {
   Query: {
     personCount: () => persons.length,
-    allPersons: () => persons,
+    allPersons: (root, args) => {
+      if (!args.phone) {
+        return persons;
+      }
+      const byPhone = (person) =>
+        args.phone === "YES" ? person.phone : !person.phone;
+      return persons.filter(byPhone);
+    },
     findPerson: (root, args) => persons.find((p) => p.name === args.name),
   },
   Person: {
-    name: (root) => root.name,
-    phone: (root) => root.phone,
-    street: (root) => root.street,
-    city: (root) => root.city,
-    id: (root) => root.id,
+    address: ({ street, city }) => {
+      return {
+        street,
+        city,
+      };
+    },
+  },
+  Mutation: {
+    addPerson: (root, args) => {
+      if (persons.find((p) => p.name === args.name)) {
+        throw new GraphQLError("Name must be unique", {
+          extensions: {
+            code: "BAD_USER_INPUT",
+            invalidArgs: args.name,
+          },
+        });
+      }
+
+      const person = { ...args, id: uuid() };
+      persons = persons.concat(person);
+      return person;
+    },
   },
 };
 
