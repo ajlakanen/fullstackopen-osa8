@@ -116,7 +116,7 @@ const resolvers = {
       return books.filter((book) => book.author === args.name);
     },
     allAuthors: (root, args) => {
-      authors.map((author) => {
+      return authors.map((author) => {
         const booksByAuthor = books.filter(
           (book) => book.author === author.name
         ).length;
