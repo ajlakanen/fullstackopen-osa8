@@ -105,18 +105,47 @@ const typeDefs = `
     genres: [String!]!
   }
 
+  type Author {
+    name: String!
+    bookCount: Int
+  }
+
   type Query {
     bookCount: Int!
     authorCount: Int!
     allBooks: [Book!]!
+    allAuthors: [Author!]!
   }
 `;
 
 const resolvers = {
   Query: {
-    bookCount: () => books.length,
+    bookCount: (root, args) => {
+      if (!args.author) {
+        return books.length;
+      }
+      return books.filter((book) => book.author === args.author).length;
+    },
     authorCount: () => authors.length,
     allBooks: () => books,
+    allAuthors: (root, args) => {
+      if (!args.author) {
+        return authors;
+      }
+      const byAuthor = (book) => book.author === args.author;
+      return books.filter(byAuthor);
+    },
+    /*allAuthors: (root, args) => {
+      authors.map((author) => {
+        const bookCount = books.filter(
+          (book) => book.author === author.name
+        ).length;
+        return {
+          name: author.name,
+          bookCount: bookCount !== null ? bookCount : 0,
+        };
+      });
+    },*/
   },
 };
 
