@@ -27,20 +27,6 @@ let authors = [
   },
 ];
 
-/*
- * Suomi:
- * Saattaisi olla järkevämpää assosioida kirja ja sen tekijä tallettamalla kirjan yhteyteen tekijän nimen sijaan tekijän id
- * Yksinkertaisuuden vuoksi tallennamme kuitenkin kirjan yhteyteen tekijän nimen
- *
- * English:
- * It might make more sense to associate a book with its author by storing the author's id in the context of the book instead of the author's name
- * However, for simplicity, we will store the author's name in connection with the book
- *
- * Spanish:
- * Podría tener más sentido asociar un libro con su autor almacenando la id del autor en el contexto del libro en lugar del nombre del autor
- * Sin embargo, por simplicidad, almacenaremos el nombre del autor en conección con el libro
- */
-
 let books = [
   {
     title: "Clean Code",
@@ -93,10 +79,6 @@ let books = [
   },
 ];
 
-/*
-  you can remove the placeholder query once your first own has been implemented 
-*/
-
 const typeDefs = `
   type Book {
     title: String!
@@ -107,13 +89,13 @@ const typeDefs = `
 
   type Author {
     name: String!
-    bookCount: Int
+    bookCount: Int!
   }
 
   type Query {
-    bookCount: Int!
+    bookCount(author: String): Int!
     authorCount: Int!
-    allBooks: [Book!]!
+    allBooks(author: String): [Book!]!
     allAuthors: [Author!]!
   }
 `;
@@ -127,25 +109,25 @@ const resolvers = {
       return books.filter((book) => book.author === args.author).length;
     },
     authorCount: () => authors.length,
-    allBooks: () => books,
-    allAuthors: (root, args) => {
-      if (!args.author) {
-        return authors;
+    allBooks: (root, args) => {
+      if (!args.name) {
+        return books;
       }
-      const byAuthor = (book) => book.author === args.author;
-      return books.filter(byAuthor);
+      return books.filter((book) => book.author === args.name);
     },
-    /*allAuthors: (root, args) => {
+    allAuthors: (root, args) => {
       authors.map((author) => {
-        const bookCount = books.filter(
+        const booksByAuthor = books.filter(
           (book) => book.author === author.name
         ).length;
-        return {
-          name: author.name,
-          bookCount: bookCount !== null ? bookCount : 0,
-        };
+        return { name: author.name, bookCount: booksByAuthor };
       });
-    },*/
+    },
+  },
+
+  Author: {
+    name: (root) => root.name,
+    bookCount: (root) => root.bookCount,
   },
 };
 
