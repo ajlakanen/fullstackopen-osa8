@@ -110,10 +110,11 @@ const resolvers = {
     },
     authorCount: () => authors.length,
     allBooks: (root, args) => {
-      if (!args.name) {
+      console.log("args.author", args.author);
+      if (!args.author) {
         return books;
       }
-      return books.filter((book) => book.author === args.name);
+      return books.filter((book) => book.author === args.author);
     },
     allAuthors: (root, args) => {
       return authors.map((author) => {
